@@ -1,0 +1,166 @@
+# Stage 4: VAE-Based Anatomical Plausibility Refinement
+# Configuration for denoising variational autoencoder
+
+# Model Configuration
+model:
+  # Load ensemble predictions from Stage 3
+  input_checkpoint: "checkpoints/stage3/best_model.pth"
+
+  # VAE architecture
+  vae:
+    name: "pose_vae"
+    input_dim: 51 # 17 keypoints × 3 (x, y, confidence)
+    latent_dim: 32 # Compressed representation
+    hidden_dims: [128, 64, 32] # Encoder layers
+    activation: "relu"
+    dropout: 0.2
+    use_batch_norm: true
+
+  # Plausibility checking
+  plausibility:
+    reconstruction_threshold: 0.15 # If error > threshold, use VAE output
+    confidence_adjustment: true # Adjust confidence based on plausibility
+    anatomical_constraints:
+      check_bone_lengths: true # Ensure reasonable bone proportions
+      check_angles: true # Ensure valid joint angles
+      max_bone_length_ratio: 2.5 # Max ratio between similar bones
+
+# Dataset Configuration
+dataset:
+  # Use pseudo-labeled COCO data for training VAE
+  train:
+    image_dir: "data/external/coco_pseudo_labeled"
+    annotation_file: "data/external/coco_pseudo_labeled/annotations.json"
+    num_samples: 10000
+
+  val:
+    image_dir: "data/raw"
+    annotation_file: "data/annotations/val_keypoints.json"
+
+  test:
+    image_dir: "data/raw"
+    annotation_file: "data/annotations/test_keypoints.json"
+
+  num_workers: 4
+
+# Training Configuration
+training:
+  epochs: 30
+  batch_size: 128 # Larger batch for VAE stability
+  learning_rate: 1.0e-3
+  optimizer: "adam" # Adam works well for VAEs
+  weight_decay: 0.0001
+  gradient_clip: 1.0
+
+  # VAE-specific parameters
+  vae_training:
+    beta: 1.0 # KL divergence weight (β-VAE)
+    beta_annealing: true # Gradually increase β
+    beta_schedule:
+      start: 0.0
+      end: 1.0
+      anneal_epochs: 10
+    reconstruction_weight: 1.0
+    kl_weight_schedule: "monotonic" # monotonic or cyclic
+
+  scheduler:
+    type: "cosine"
+    warmup_epochs: 3
+    min_lr: 1.0e-6
+
+  mixed_precision: true
+
+  # Loss configuration
+  loss:
+    reconstruction_loss: "mse" # or "l1"
+    kl_loss: "standard" # standard KL divergence
+    perceptual_loss: false # Not needed for keypoints
+
+# VAE Sampling Configuration
+sampling:
+  num_samples: 10 # Generate multiple samples per input
+  temperature: 1.0 # Sampling temperature (lower = more conservative)
+  use_mode: false # If true, use mean instead of sampling
+
+# Refinement Strategy
+refinement:
+  # Step 1: Check plausibility of Stage 3 predictions
+  check_predictions: true
+
+  # Step 2: If implausible, reconstruct through VAE
+  reconstruct_implausible: true
+
+  # Step 3: Blend original and reconstructed
+  blending:
+    enabled: true
+    method: "confidence_weighted" # Options: hard_threshold, confidence_weighted, adaptive
+    blend_ratio: 0.3 # 30% VAE, 70% original when blending
+
+# Evaluation Configuration
+evaluation:
+  metrics: ["AP", "AP50", "AP75", "AR"]
+  oks_sigmas:
+    [
+      0.026,
+      0.025,
+      0.025,
+      0.035,
+      0.035,
+      0.079,
+      0.079,
+      0.072,
+      0.072,
+      0.062,
+      0.062,
+      0.107,
+      0.107,
+      0.087,
+      0.087,
+      0.089,
+      0.089,
+    ]
+  save_predictions: true
+  visualize_samples: 20
+
+  # VAE-specific metrics
+  track_reconstruction_error: true
+  track_kl_divergence: true
+  track_plausibility_rate: true # % of predictions deemed plausible
+
+  # Before/after comparison
+  compare_with_stage3: true
+
+# Checkpointing
+checkpoint:
+  save_dir: "checkpoints/stage4"
+  save_frequency: 5
+  keep_best_only: true
+  monitor: "val_ap"
+  mode: "max"
+
+# Logging
+logging:
+  use_wandb: false
+  use_tensorboard: true
+  log_frequency: 50
+  project_name: "pose_llm_identifier"
+  experiment_name: "stage4_vae_refinement"
+
+  # Log VAE-specific metrics
+  log_vae_metrics: true
+  log_latent_space: true # Visualize latent space
+  log_reconstructions: true
+
+# Hardware
+hardware:
+  device: "cuda"
+  gpu_ids: [0]
+  deterministic: true
+  benchmark: false
+  seed: 42
+# Expected Performance
+# Stage 3 (Ensemble): 92-95% AP
+# Stage 4 (VAE): 94-97% AP (+2% improvement)
+# - VAE corrects anatomically impossible poses
+# - Reduces outlier errors significantly
+# - Smooths predictions while preserving accuracy

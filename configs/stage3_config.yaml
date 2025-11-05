@@ -1,0 +1,148 @@
+# Stage 3: Ensemble Fusion with Multiple Models
+# Configuration for combining Sapiens-2B, DWPose, and ViTPose
+
+# Model Configuration
+models:
+  # Primary model (our trained Stage 2 model)
+  sapiens:
+    name: "sapiens_2b_ssl"
+    checkpoint: "checkpoints/stage2/best_model.pth"
+    weight: 0.5 # Higher weight for our trained model
+    num_keypoints: 17
+
+  # DWPose (Knowledge Distillation model)
+  dwpose:
+    name: "dwpose"
+    checkpoint: "pretrained/dwpose/dw-ll_ucoco_384.pth"
+    weight: 0.3
+    num_keypoints: 17
+    input_size: [288, 384] # DWPose uses different input size
+
+  # ViTPose (NeurIPS 2022 baseline)
+  vitpose:
+    name: "vitpose"
+    checkpoint: "pretrained/vitpose/vitpose_large_coco.pth"
+    weight: 0.2
+    num_keypoints: 17
+    input_size: [256, 192]
+
+# Ensemble Configuration
+ensemble:
+  method: "confidence_weighted_fusion" # Options: simple_avg, weighted_avg, confidence_weighted_fusion
+
+  # Confidence-weighted fusion: Final = Σ(weight_i * pred_i * conf_i) / Σ(weight_i * conf_i)
+  use_confidence_scores: true
+  confidence_threshold: 0.3 # Ignore predictions below this confidence
+
+  # Test-time augmentation (TTA)
+  tta:
+    enabled: true
+    num_variants: 8 # Original + 7 augmented versions
+    variants:
+      - "original"
+      - "horizontal_flip"
+      - "rotate_5"
+      - "rotate_-5"
+      - "scale_0.9"
+      - "scale_1.1"
+      - "brightness_1.2"
+      - "brightness_0.8"
+    aggregation: "mean" # mean or median
+
+  # Iterative refinement module
+  refinement:
+    enabled: true
+    num_iterations: 3
+    use_se_attention: true # Squeeze-and-Excitation attention
+    hidden_dim: 256
+    learning_rate: 1.0e-4
+
+# Dataset Configuration
+dataset:
+  image_dir: "data/raw"
+  val_annotations: "data/annotations/val_keypoints.json"
+  test_annotations: "data/annotations/test_keypoints.json"
+  num_workers: 4
+
+# Training Configuration (for refinement module)
+training:
+  epochs: 10 # Short training for refinement module
+  batch_size: 8
+  learning_rate: 1.0e-4
+  optimizer: "adamw"
+  weight_decay: 0.0001
+  gradient_clip: 1.0
+
+  scheduler:
+    type: "cosine"
+    warmup_epochs: 1
+    min_lr: 1.0e-6
+
+  mixed_precision: true
+
+  loss:
+    type: "mse"
+    reduction: "mean"
+
+# Evaluation Configuration
+evaluation:
+  metrics: ["AP", "AP50", "AP75", "AR"]
+  oks_sigmas:
+    [
+      0.026,
+      0.025,
+      0.025,
+      0.035,
+      0.035,
+      0.079,
+      0.079,
+      0.072,
+      0.072,
+      0.062,
+      0.062,
+      0.107,
+      0.107,
+      0.087,
+      0.087,
+      0.089,
+      0.089,
+    ]
+  save_predictions: true
+  visualize_samples: 20
+
+  # Per-model evaluation
+  evaluate_individual_models: true
+  save_comparison_grid: true
+
+# Checkpointing
+checkpoint:
+  save_dir: "checkpoints/stage3"
+  save_frequency: 2
+  keep_best_only: true
+  monitor: "val_ap"
+  mode: "max"
+
+# Logging
+logging:
+  use_wandb: false
+  use_tensorboard: true
+  log_frequency: 25
+  project_name: "pose_llm_identifier"
+  experiment_name: "stage3_ensemble"
+
+  # Log per-model metrics
+  log_individual_metrics: true
+
+# Hardware
+hardware:
+  device: "cuda"
+  gpu_ids: [0]
+  deterministic: true
+  benchmark: false
+  seed: 42
+# Expected Performance
+# Stage 2 (SSL): 89-93% AP
+# Stage 3 (Ensemble): 92-95% AP (+3-2% improvement)
+# - Ensemble diversity reduces errors
+# - TTA provides additional robustness
+# - Iterative refinement corrects outliers

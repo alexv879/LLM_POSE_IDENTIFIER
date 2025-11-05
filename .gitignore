@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+pose_env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# PyTorch
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Data (DO NOT upload datasets)
+data/raw/
+data/external/
+data/coco/
+data/pretrained/
+*.jpg
+*.jpeg
+*.png
+*.mp4
+*.avi
+
+# Annotations (keep structure, ignore large files)
+data/annotations/*.json
+!data/annotations/sample.json
+
+# Checkpoints and Models
+checkpoints/
+logs/
+results/
+outputs/
+wandb/
+
+# Papers - INCLUDED (keep all PDFs for reference)
+# papers/*.pdf  # Commented out - we want to include papers
+!papers/README.md
+
+# System files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# Logs
+*.log
+
+# Serena
+.serena/

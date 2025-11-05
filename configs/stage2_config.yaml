@@ -1,0 +1,178 @@
+# Stage 2: Enhanced SSL with Multi-Path Augmentation
+# Configuration based on ICLR 2025 SSL paper
+
+# Model Configuration
+model:
+  name: "sapiens_2b_ssl"
+  checkpoint: "checkpoints/stage1/best_model.pth" # Load from Stage 1
+  num_keypoints: 17
+  input_size: [256, 192]
+  heatmap_size: [64, 48]
+  sigma: 2.0
+
+# Dataset Configuration
+dataset:
+  # Labeled data (your dataset)
+  labeled:
+    image_dir: "data/raw"
+    train_annotations: "data/annotations/train_keypoints.json"
+    val_annotations: "data/annotations/val_keypoints.json"
+
+  # Unlabeled data (COCO images without using labels)
+  unlabeled:
+    image_dir: "data/external/coco_unlabeled"
+    num_samples: 5000
+
+  num_workers: 4
+  prefetch_factor: 2
+
+# Semi-Supervised Learning Configuration
+ssl:
+  enabled: true
+  ssl_weight: 0.5 # λ parameter
+
+  # Ramp-up schedule (gradually increase SSL weight)
+  rampup:
+    enabled: true
+    epochs: 5 # Ramp up over first 5 epochs
+    type: "linear" # linear or exponential
+
+  # Multi-path consistency (ICLR 2025)
+  multi_path:
+    enabled: true
+    num_hard_augmentations: 3 # Use 3 different hard aug variants
+    average_consistency: true # Average loss across variants
+
+# Training Configuration
+training:
+  epochs: 25
+  batch_size: 4 # 50% labeled, 50% unlabeled = 2 + 2
+  labeled_batch_ratio: 0.5
+
+  learning_rate: 1.0e-4 # Lower than Stage 1
+  optimizer: "adamw"
+  weight_decay: 0.0001
+  gradient_clip: 1.0
+
+  # Learning rate schedule
+  scheduler:
+    type: "cosine"
+    warmup_epochs: 2
+    min_lr: 1.0e-6
+
+  mixed_precision: true
+
+  # Loss configuration
+  loss:
+    supervised:
+      type: "mse"
+      weight: 1.0
+    consistency:
+      type: "mse"
+      weight_schedule: "rampup" # Use rampup schedule
+
+# Augmentation Strategy (Synergistic Multi-Path)
+augmentation:
+  # Weak augmentation (for reference predictions)
+  weak:
+    horizontal_flip: 0.3
+    color_jitter:
+      brightness: 0.2
+      contrast: 0.2
+      saturation: 0.2
+      hue: 0.05
+    probability: 0.2
+
+  # Hard augmentation variant 1: Aggressive geometry
+  hard_variant_1:
+    horizontal_flip: 0.5
+    rotation: 40 # ±40 degrees
+    scale: [0.8, 1.2]
+    shear: 15 # ±15 degrees
+    affine_probability: 0.6
+
+  # Hard augmentation variant 2: Appearance changes
+  hard_variant_2:
+    perspective: 0.05
+    gaussian_noise:
+      var_limit: [10, 50]
+      probability: 0.5
+    gaussian_blur:
+      kernel_size: 5
+      probability: 0.3
+
+  # Hard augmentation variant 3: Occlusion simulation
+  hard_variant_3:
+    coarse_dropout:
+      max_holes: 10
+      max_height: 30
+      max_width: 30
+      probability: 0.5
+    motion_blur:
+      blur_limit: 7
+      probability: 0.4
+
+  # Validation (no augmentation)
+  val:
+    resize_only: true
+
+# Evaluation Configuration
+evaluation:
+  metrics: ["AP", "AP50", "AP75", "AR"]
+  oks_sigmas:
+    [
+      0.026,
+      0.025,
+      0.025,
+      0.035,
+      0.035,
+      0.079,
+      0.079,
+      0.072,
+      0.072,
+      0.062,
+      0.062,
+      0.107,
+      0.107,
+      0.087,
+      0.087,
+      0.089,
+      0.089,
+    ]
+  save_predictions: true
+  visualize_samples: 20
+
+  # Track SSL-specific metrics
+  track_consistency_loss: true
+  track_ssl_weight: true
+
+# Checkpointing
+checkpoint:
+  save_dir: "checkpoints/stage2"
+  save_frequency: 5
+  keep_best_only: true
+  monitor: "val_ap"
+  mode: "max"
+
+# Logging
+logging:
+  use_wandb: false
+  use_tensorboard: true
+  log_frequency: 50
+  project_name: "pose_llm_identifier"
+  experiment_name: "stage2_ssl_multipath"
+
+  # Log additional SSL metrics
+  log_ssl_metrics: true
+
+# Hardware
+hardware:
+  device: "cuda"
+  gpu_ids: [0]
+  deterministic: true
+  benchmark: false
+  seed: 42
+# Expected Performance
+# Stage 1 baseline: 82-85% AP
+# Stage 2 with SSL: 89-93% AP (+6-8% improvement)
+# Multi-path provides ~2-3% extra gain over single hard augmentation
