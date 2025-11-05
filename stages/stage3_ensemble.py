@@ -445,7 +445,7 @@ class Stage3EnsembleTrainer:
         
         return metrics
     
-    def train(self):
+    def run(self):
         """Full training loop (if refinement enabled)"""
         logger.info("Starting Stage 3 Ensemble training...")
         
@@ -538,4 +538,4 @@ if __name__ == "__main__":
     
     # Train
     trainer = Stage3EnsembleTrainer(args.config)
-    trainer.train()
+    trainer.run()

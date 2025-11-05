@@ -489,7 +489,7 @@ class Stage4VAETrainer:
             'plausibility_rate': plausibility_rate
         }
     
-    def train(self):
+    def run(self):
         """Full training loop"""
         logger.info("Starting Stage 4 VAE training...")
         
@@ -563,4 +563,4 @@ if __name__ == "__main__":
     
     # Train
     trainer = Stage4VAETrainer(args.config)
-    trainer.train()
+    trainer.run()

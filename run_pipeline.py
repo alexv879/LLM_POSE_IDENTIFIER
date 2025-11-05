@@ -63,7 +63,7 @@ class PoseLLMPipeline:
         
         try:
             trainer = Stage1Trainer(str(self.stage_configs[1]))
-            trainer.train()
+            trainer.run()
             logger.info("✓ Stage 1 completed successfully")
             return True
         except Exception as e:
@@ -84,7 +84,7 @@ class PoseLLMPipeline:
         
         try:
             trainer = Stage2SSLTrainer(str(self.stage_configs[2]))
-            trainer.train()
+            trainer.run()
             logger.info("✓ Stage 2 completed successfully")
             return True
         except Exception as e:
@@ -105,7 +105,7 @@ class PoseLLMPipeline:
         
         try:
             trainer = Stage3EnsembleTrainer(str(self.stage_configs[3]))
-            trainer.train()
+            trainer.run()
             logger.info("✓ Stage 3 completed successfully")
             return True
         except Exception as e:
@@ -126,7 +126,7 @@ class PoseLLMPipeline:
         
         try:
             trainer = Stage4VAETrainer(str(self.stage_configs[4]))
-            trainer.train()
+            trainer.run()
             logger.info("✓ Stage 4 completed successfully")
             return True
         except Exception as e:

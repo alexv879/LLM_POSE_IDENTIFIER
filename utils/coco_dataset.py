@@ -89,8 +89,7 @@ class COCOPoseDataset(Dataset):
         else:
             self.udp_codec = None
             logger.info("Using standard Gaussian heatmap encoding")
-        self.sigma = sigma
-        
+
         # Load COCO annotations
         logger.info(f"Loading annotations from {annotations_file}")
         with open(annotations_file, 'r') as f:

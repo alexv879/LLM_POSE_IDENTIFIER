@@ -92,7 +92,7 @@ class SapiensForPose(nn.Module):
                 logger.warning(f"Failed to load from HuggingFace: {e}")
                 logger.info("Initializing from scratch...")
                 config = ViTConfig(
-                    hidden_size=1024,  # ViT-Base
+                    hidden_size=1024,  # ViT-Base (NOTE: Sapiens-2B uses 2048, update if using full model)
                     num_hidden_layers=24,
                     num_attention_heads=16,
                     intermediate_size=4096,
@@ -104,7 +104,7 @@ class SapiensForPose(nn.Module):
             # Initialize from scratch
             logger.info("Initializing ViT from scratch...")
             config = ViTConfig(
-                hidden_size=1024,  # ViT-Base (use 2048 for ViT-2B if available)
+                hidden_size=1024,  # ViT-Base (NOTE: Sapiens-2B uses 2048, update if using full model)
                 num_hidden_layers=24,
                 num_attention_heads=16,
                 intermediate_size=4096,

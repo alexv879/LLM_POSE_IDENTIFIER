@@ -554,7 +554,7 @@ class Stage2SSLTrainer:
         
         return keypoints
     
-    def train(self):
+    def run(self):
         """Full training loop"""
         logger.info("Starting Stage 2 SSL training...")
         
@@ -641,4 +641,4 @@ if __name__ == "__main__":
     
     # Train
     trainer = Stage2SSLTrainer(args.config)
-    trainer.train()
+    trainer.run()
