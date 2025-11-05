@@ -11,23 +11,43 @@
 
 ## ⚠️ IMPORTANT: Datasets Must Be Downloaded Separately
 
-**This repository does NOT include datasets.** After cloning, you must:
+**This repository does NOT include datasets.** After cloning, you must download these datasets to use the code:
 
-1. **Download COCO 2017 dataset** (~19GB) - REQUIRED for training
-   ```bash
-   python scripts/download_coco.py
-   ```
+### 🔴 REQUIRED (All Stages):
+1. **COCO 2017 Train Images** (~18GB, 118,287 images)
+   - Used by: Stage 1, Stage 2 (labeled), validation
+   - Location: `data/coco/images/train2017/`
+   
+2. **COCO 2017 Val Images** (~1GB, 5,000 images)
+   - Used by: Validation and evaluation
+   - Location: `data/coco/images/val2017/`
 
-2. **Optional: Unlabeled COCO images** (~5GB) - For Stage 2 SSL
+3. **COCO 2017 Annotations** (~241MB)
+   - Files: `person_keypoints_train2017.json`, `person_keypoints_val2017.json`
+   - Location: `data/coco/annotations/`
+
+**Quick download (automatic):**
+```bash
+python scripts/download_coco.py
+```
+
+### 🟡 OPTIONAL (Stage 2 SSL only):
+4. **Unlabeled COCO Images** (~5GB, 5,000 images for semi-supervised learning)
+   - Used by: Stage 2 SSL multi-path consistency
+   - Location: `data/external/coco_unlabeled/`
    ```bash
    python scripts/download_coco_unlabeled.py
    ```
 
-3. **Pretrained weights** (~5GB) - Auto-downloads from HuggingFace on first run
+### 🟢 AUTO-DOWNLOADED:
+5. **Sapiens-1B Pretrained Weights** (~5GB)
+   - Downloads automatically from HuggingFace on first training run
+   - Model: `facebook/sapiens-pretrain-1b-torchscript`
+   - Location: `data/pretrained/sapiens_1b/`
 
-📖 **See [DATASET_REQUIREMENTS.md](DATASET_REQUIREMENTS.md) for complete instructions**
+📖 **See [DATASET_REQUIREMENTS.md](DATASET_REQUIREMENTS.md) for manual download instructions**
 
-Total disk space needed: **~30GB**
+**Total disk space needed: ~30GB** (19GB COCO + 5GB weights + 5GB optional SSL)
 
 ---
 
@@ -155,21 +175,44 @@ FINAL: Predictions + metrics + visualizations
 
 **Before starting training, you MUST download the required datasets:**
 
-#### Required (for all stages):
+#### 🔴 Required for ALL stages (Stage 1-5):
 ```bash
-# Download COCO 2017 train/val (~19GB)
+# Download COCO 2017 train/val images + annotations (~19GB)
+# This creates: data/coco/images/train2017/ (118K images)
+#               data/coco/images/val2017/ (5K images)
+#               data/coco/annotations/*.json
 python scripts/download_coco.py
 ```
 
-#### Optional (for Stage 2 SSL):
+**Expected directory structure after download:**
+```
+data/
+├── coco/
+│   ├── images/
+│   │   ├── train2017/          # 118,287 images (Stage 1, 2, 3, 4, 5)
+│   │   └── val2017/            # 5,000 images (validation)
+│   └── annotations/
+│       ├── person_keypoints_train2017.json
+│       ├── person_keypoints_val2017.json
+│       ├── instances_train2017.json
+│       └── instances_val2017.json
+```
+
+#### 🟡 Optional for Stage 2 SSL (Semi-Supervised Learning):
 ```bash
-# Download unlabeled COCO images (~5GB)
+# Download 5,000 unlabeled COCO images for multi-path consistency (~5GB)
+# This creates: data/external/coco_unlabeled/
 python scripts/download_coco_unlabeled.py
 ```
 
-**Pretrained weights** (~5GB) auto-download from HuggingFace during first training run.
+**Without this:** Stage 2 SSL will be skipped, but Stages 1, 3, 4, 5 will still work.
 
-📖 **Full details:** See [DATASET_REQUIREMENTS.md](DATASET_REQUIREMENTS.md)
+#### 🟢 Pretrained weights (auto-downloads):
+- **Sapiens-1B**: ~5GB, downloads automatically from `facebook/sapiens-pretrain-1b-torchscript` during first training run
+- **Location**: `data/pretrained/sapiens_1b/`
+- **No manual download needed**
+
+📖 **Manual download option:** See [DATASET_REQUIREMENTS.md](DATASET_REQUIREMENTS.md)
 
 ---
 
