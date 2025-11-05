@@ -9,6 +9,28 @@
 
 ---
 
+## ⚠️ IMPORTANT: Datasets Must Be Downloaded Separately
+
+**This repository does NOT include datasets.** After cloning, you must:
+
+1. **Download COCO 2017 dataset** (~19GB) - REQUIRED for training
+   ```bash
+   python scripts/download_coco.py
+   ```
+
+2. **Optional: Unlabeled COCO images** (~5GB) - For Stage 2 SSL
+   ```bash
+   python scripts/download_coco_unlabeled.py
+   ```
+
+3. **Pretrained weights** (~5GB) - Auto-downloads from HuggingFace on first run
+
+📖 **See [DATASET_REQUIREMENTS.md](DATASET_REQUIREMENTS.md) for complete instructions**
+
+Total disk space needed: **~30GB**
+
+---
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
@@ -125,7 +147,31 @@ FINAL: Predictions + metrics + visualizations
 - Python 3.8 or higher
 - CUDA 11.8+ (for GPU training)
 - 8GB+ VRAM (RTX 4060 or equivalent)
-- 100GB+ free disk space
+- **100GB+ free disk space (for datasets + pretrained models)**
+
+---
+
+### ⚠️ CRITICAL: Download Datasets First!
+
+**Before starting training, you MUST download the required datasets:**
+
+#### Required (for all stages):
+```bash
+# Download COCO 2017 train/val (~19GB)
+python scripts/download_coco.py
+```
+
+#### Optional (for Stage 2 SSL):
+```bash
+# Download unlabeled COCO images (~5GB)
+python scripts/download_coco_unlabeled.py
+```
+
+**Pretrained weights** (~5GB) auto-download from HuggingFace during first training run.
+
+📖 **Full details:** See [DATASET_REQUIREMENTS.md](DATASET_REQUIREMENTS.md)
+
+---
 
 ### Step 1: Clone Repository
 
